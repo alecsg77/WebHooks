@@ -39,4 +39,6 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 
+app.CreateDatabase<ApplicationDbContext>();
+
 app.Run();
