@@ -9,5 +9,16 @@ namespace WebHooks.WebApp.Data
             : base(options)
         {
         }
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+            builder.Entity<Registration>()
+                .HasKey(x => new { x.Id, x.User });
+            builder.Entity<Registration>()
+                .Property(x => x.RowVer)
+                .HasDefaultValue(0)
+                .IsRowVersion();
+        }
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using WebHooks.WebApp.Data;
+using WebHooks.WebApp.Model;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +15,7 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
-builder.Services.AddRazorPages();
+builder.Services.AddMvc();
 
 builder.Services.AddSwaggerGen(
 options =>
@@ -39,6 +40,10 @@ options =>
             }
         });
 });
+
+builder.Services.AddScoped<IWebHookRegistrationsManager, WebHookRegistrationsManager>();
+builder.Services.AddScoped<IWebHookUser, WebHookUser>();
+builder.Services.AddScoped<IWebHookRepository, DbWebHookRepository>();
 
 var app = builder.Build();
 
@@ -65,6 +70,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
+app.MapControllers();
 
 app.CreateDatabase<ApplicationDbContext>();
 
