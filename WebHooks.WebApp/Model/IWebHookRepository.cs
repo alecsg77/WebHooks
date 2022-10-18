@@ -4,6 +4,7 @@
     {
         Task<ICollection<WebHook>> GetAllWebHooksAsync(string userId);
         Task<WebHook?> LookupWebHookAsync(string userId, string id);
+        Task<ICollection<WebHook>> QueryWebHooksAsync(string user);
         Task<RegistrationResult> InsertWebHookAsync(string userId, WebHook webHook);
         Task<RegistrationResult> UpdateWebHookAsync(string userId, WebHook webHook);
         Task<RegistrationResult> DeleteWebHookAsync(string userId, string id);

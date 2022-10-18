@@ -41,9 +41,13 @@ options =>
         });
 });
 
+builder.Services.AddHttpClient();
+
 builder.Services.AddScoped<IWebHookRegistrationsManager, WebHookRegistrationsManager>();
 builder.Services.AddScoped<IWebHookUser, WebHookUser>();
 builder.Services.AddScoped<IWebHookRepository, DbWebHookRepository>();
+builder.Services.AddScoped<IWebHookManager, WebHookManager>();
+builder.Services.AddSingleton<IWebHookSender, DataflowWebHookSender>();
 
 var app = builder.Build();
 

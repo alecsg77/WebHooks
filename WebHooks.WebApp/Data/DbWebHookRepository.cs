@@ -2,6 +2,7 @@
 using System.Data.Common;
 using Microsoft.Data.Sqlite;
 using System.Text.Json;
+using System.Globalization;
 using WebHooks.WebApp.Model;
 
 namespace WebHooks.WebApp.Data
@@ -71,6 +72,30 @@ namespace WebHooks.WebApp.Data
             {
                 _logger.LogError(ex, ex.Message);
                 throw new InvalidOperationException(ex.Message, ex);
+            }
+        }
+
+        public async Task<ICollection<WebHook>> QueryWebHooksAsync(string user)
+        {
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            user = NormalizeKey(user);
+
+            try
+            {
+                var registrations = await _context.Set<Registration>().Where(r => r.User == user).ToArrayAsync();
+                ICollection<WebHook> matches = registrations.Select(r => ConvertToWebHook(r))
+                    .Where(w => w !=null).ToArray()!;
+                return matches;
+            }
+            catch (Exception ex)
+            {
+                var message = $"Get Operation Failed: {ex.Message}";
+                _logger.LogError(ex, message);
+                throw new InvalidOperationException(message, ex);
             }
         }
 
