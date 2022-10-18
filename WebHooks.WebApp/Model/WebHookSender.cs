@@ -27,6 +27,18 @@ namespace WebHooks.WebApp.Model
                 Content = new StringContent(workItem.Notifications, Encoding.UTF8, "application/json")
             };
 
+            foreach (var kvp in hook.Headers)
+            {
+                if (!request.Headers.TryAddWithoutValidation(kvp.Key, kvp.Value))
+                {
+                    if (!request.Content.Headers.TryAddWithoutValidation(kvp.Key, kvp.Value))
+                    {
+                        var message = $"Invalid Header {kvp.Key} in WebHook {hook.Id}";
+                        _logger.LogError(message);
+                    }
+                }
+            }
+
             return request;
         }
 

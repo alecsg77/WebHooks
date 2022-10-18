@@ -1,9 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections;
+using System.ComponentModel.DataAnnotations;
 
 namespace WebHooks.WebApp.Model
 {
     public class WebHook
     {
+        private IDictionary<string, string>? _headers;
+
         public WebHook()
         {
             Id = GetId();
@@ -15,6 +18,12 @@ namespace WebHooks.WebApp.Model
         public Uri? WebHookUri { get; set; }
 
         public string? Description { get; set; }
+
+        public IDictionary<string, string> Headers
+        {
+            get => _headers ??= new Dictionary<string, string>();
+            set => _headers = value;
+        }
 
         public static string GetId()
         {
