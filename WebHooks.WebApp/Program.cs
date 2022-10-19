@@ -1,7 +1,13 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
+using Duende.IdentityServer;
+
+using Microsoft.AspNetCore.ApiAuthorization.IdentityServer;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
+
 using WebHooks.WebApp.Data;
 using WebHooks.WebApp.Model;
 
@@ -15,16 +21,38 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
+
+builder.Services.AddIdentityServer()
+    .AddApiAuthorization<IdentityUser, ApplicationDbContext>(options =>
+    {
+        options.Clients.AddIdentityServerSPA("swagger", c =>
+        {
+            c.WithRedirectUri("/swagger/oauth2-redirect.html");
+        });
+    });
+
+builder.Services.AddAuthentication()
+    .AddIdentityServerJwt();
+
+builder.Services.Configure<JwtBearerOptions>(IdentityServerJwtConstants.IdentityServerJwtBearerScheme, options =>
+    {
+        options.ForwardDefaultSelector = context =>
+        {
+            string authorization = context.Request.Headers[HeaderNames.Authorization];
+            return string.IsNullOrEmpty(authorization) || !authorization.StartsWith("Bearer ")
+                ? IdentityConstants.ApplicationScheme
+                : null;
+        };
+    });
+
 builder.Services.AddMvc();
 
-builder.Services.AddSwaggerGen(
-options =>
+builder.Services.AddSwaggerGen(options =>
 {
-    options.AddSecurityDefinition("identity", new OpenApiSecurityScheme()
+    options.AddSecurityDefinition("openId", new OpenApiSecurityScheme()
     {
-        Type = SecuritySchemeType.ApiKey,
-        In = ParameterLocation.Cookie,
-        Name = CookieAuthenticationDefaults.CookiePrefix + IdentityConstants.ApplicationScheme
+        Type = SecuritySchemeType.OpenIdConnect,
+        OpenIdConnectUrl = new Uri("/.well-known/openid-configuration", UriKind.Relative)
     });
     options.AddSecurityRequirement(
         new OpenApiSecurityRequirement
@@ -32,11 +60,13 @@ options =>
             {
                 new OpenApiSecurityScheme{
                     Reference = new OpenApiReference{
-                        Id = "identity",
+                        Id = "openId",
                         Type = ReferenceType.SecurityScheme
                     }
                 },
-                new List<string>()
+                new [] {
+                    "WebHooks.WebAppAPI"
+                }
             }
         });
 });
@@ -56,7 +86,16 @@ if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.OAuthClientId("swagger");
+        options.OAuthScopes(
+            IdentityServerConstants.StandardScopes.OpenId,
+            IdentityServerConstants.StandardScopes.Profile,
+            "WebHooks.WebAppAPI"
+        );
+        options.OAuthUsePkce();
+    });
 }
 else
 {
@@ -67,6 +106,7 @@ else
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseIdentityServer();
 
 app.UseRouting();
 
